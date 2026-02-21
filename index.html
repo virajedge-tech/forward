@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVJ Studio | Management System</title>
+
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            black: '#000000',
+                            white: '#FFFFFF',
+                            gray: {
+                                900: '#1F2937',
+                                100: '#F3F4F6',
+                                50: '#F9FAFB'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Dexie.js (CDN) -->
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
+
+    <!-- Phosphor Icons (Alternative to Lucide for easy CDN usage) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- html2pdf.js (CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #F3F4F6;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #CECECE;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1F2937;
+        }
+
+        /* Print Styles */
+        @media print {
+            @page {
+                margin: 0;
+                size: auto;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .print-only {
+                display: block !important;
+            }
+
+            body {
+                background: white;
+                color: black;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-up {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .animate-shake {
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+
+        .ph-spin {
+            animation: ph-spin 1.5s infinite linear;
+        }
+
+        @keyframes ph-spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(359deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900 h-screen flex overflow-hidden font-sans antialiased">
+
+    <!-- Login Screen -->
+    <div id="login-screen"
+        class="fixed inset-0 z-[100] bg-white flex items-center justify-center transition-all duration-500">
+        <div class="w-full max-w-md p-8 animate-up">
+            <div class="text-center mb-10 flex flex-col items-center">
+                <img src="img/logo.png" alt="NVJ Studio" class="h-12 w-auto mb-4 object-contain">
+                <p class="text-gray-500 text-sm">Management System Access</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-6">
+                <div>
+                    <label
+                        class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Username</label>
+                    <input type="text" id="username"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
+                        placeholder="Enter username">
+                </div>
+
+                <div>
+                    <label
+                        class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Password</label>
+                    <input type="password" id="password"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
+                        placeholder="Enter password">
+                </div>
+
+                <div id="login-error" class="hidden text-red-500 text-xs text-center font-medium">
+                    Invalid credentials. Please try again.
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-black text-white font-medium py-4 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="mt-8 text-center">
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest">Secure Local Environment</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside
+        class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between flex-shrink-0 z-20 transition-all duration-300 no-print"
+        id="sidebar">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-gray-100">
+                <img src="img/logo.png" alt="NVJ Studio" class="h-8 w-auto object-contain">
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <button onclick="navigateTo('dashboard')"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-500 hover:bg-gray-50 hover:text-black transition-colors"
+                    data-target="dashboard">
+                    <i class="ph ph-squares-four text-xl"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="navigateTo('leads')"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-500 hover:bg-gray-50 hover:text-black transition-colors"
+                    data-target="leads">
+                    <i class="ph ph-users text-xl"></i>
+                    <span>Leads & Projects</span>
+                </button>
+                <button onclick="navigateTo('collaborators')"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-500 hover:bg-gray-50 hover:text-black transition-colors"
+                    data-target="collaborators">
+                    <i class="ph ph-star text-xl"></i>
+                    <span>Collaborators</span>
+                </button>
+                <button onclick="navigateTo('invoices')"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-500 hover:bg-gray-50 hover:text-black transition-colors"
+                    data-target="invoices">
+                    <i class="ph ph-receipt text-xl"></i>
+                    <span>Invoices</span>
+                </button>
+                <button onclick="navigateTo('quotations')"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-500 hover:bg-gray-50 hover:text-black transition-colors"
+                    data-target="quotations">
+                    <i class="ph ph-file-text text-xl"></i>
+                    <span>Quotations</span>
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-gray-100">
+            <button onclick="logout()"
+                class="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-gray-50 transition-colors group">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-display font-medium text-xs">
+                        A</div>
+                    <div class="flex flex-col items-start">
+                        <span class="text-xs font-medium text-black">Admin User</span>
+                        <span class="text-[10px] text-gray-400">Sign Out</span>
+                    </div>
+                </div>
+                <i class="ph ph-sign-out text-gray-400 group-hover:text-black transition-colors"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col relative overflow-hidden bg-white">
+        <!-- Header -->
+        <header
+            class="h-16 border-b border-gray-100 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-10 no-print">
+            <h1 id="page-title" class="font-display font-semibold text-xl text-black">Dashboard</h1>
+
+            <div class="flex items-center gap-4">
+                <button
+                    class="w-10 h-10 rounded-full hover:bg-gray-50 flex items-center justify-center text-gray-500 transition-colors">
+                    <i class="ph ph-bell text-xl"></i>
+                </button>
+                <button onclick="openLeadModal()"
+                    class="bg-black text-white hover:bg-gray-800 transition-colors px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-lg shadow-gray-200">
+                    <i class="ph ph-plus"></i>
+                    <span>New Lead</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Area -->
+        <div id="content-area" class="flex-1 overflow-y-auto p-8 relative">
+            <!-- Views will be injected here -->
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="modal-container"
+        class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center backdrop-blur-sm p-4">
+        <!-- Modal Content injected here -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
